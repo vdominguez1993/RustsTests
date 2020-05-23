@@ -1,3 +1,11 @@
+mod log;
+
+use log::*;
+
 fn main() {
-    println!("Hello, world!");
+    println!("Hello World");
+
+    log::init();
+
+    debug!("Que paishaa");
 }
