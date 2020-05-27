@@ -12,7 +12,7 @@ pub enum LogLevel {
     DEBUG,
     INFO,
     WARNING,
-    ERROR
+    ERROR,
 }
 
 #[macro_export]
@@ -36,7 +36,7 @@ fn create_log_folder() {
     }
 }
 
-pub fn write_to_log(level : LogLevel, text: String) {
+pub fn write_to_log(level: LogLevel, text: String) {
     let now = Utc::now();
     let date = format!("{}-{:02}-{:02}.log", now.year(), now.month(), now.day());
     let hour = format!("{:02}:{:02}:{:02}", now.hour(), now.minute(), now.second());
@@ -49,7 +49,6 @@ pub fn write_to_log(level : LogLevel, text: String) {
     };
 
     let text_to_write = format!("{} {} {}\r\n", level_info, hour, text);
-
 
     let mut file = fs::OpenOptions::new()
         .read(true)
