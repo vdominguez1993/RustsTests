@@ -48,8 +48,11 @@ fn handle_connection(mut stream: TcpStream) {
 
     match &method[..] {
         "GET" => {
+            // Protect agains path traversal issuing an error if '..' is foud
+            if is_trying_to_traverse(&path) {
+                handler = path_traversal_error;
             // If the method is a get and the path exists as a file
-            if file_in_path(&path) {
+            } else if file_in_path(&path) {
                 // Use the file server handler
                 handler = file_server;
             }
@@ -116,6 +119,10 @@ fn file_in_path(path_to_check: &str) -> bool {
     }
 }
 
+fn is_trying_to_traverse(path_to_check: &str) -> bool {
+    path_to_check.contains("..")
+}
+
 fn file_server(file_path: &str) -> Vec<u8> {
     // Serve the specified file content with an OK response
     let root_path = std::path::Path::new(WEB_ROOT);
@@ -128,6 +135,17 @@ fn file_server(file_path: &str) -> Vec<u8> {
 }
 
 fn error_404(_file_path: &str) -> Vec<u8> {
+    // Serve the 404.html to show an error to the user
+    let root_path = std::path::Path::new(WEB_ROOT);
+    let mut response: Vec<u8> = "HTTP/1.1 404 NOT FOUND\r\n\r\n".as_bytes().to_vec();
+    let mut file = fs::File::open(root_path.join("404.html")).unwrap();
+
+    file.read_to_end(&mut response).unwrap();
+
+    response
+}
+
+fn path_traversal_error(_file_path: &str) -> Vec<u8> {
     // Serve the 404.html to show an error to the user
     let root_path = std::path::Path::new(WEB_ROOT);
     let mut response: Vec<u8> = "HTTP/1.1 404 NOT FOUND\r\n\r\n".as_bytes().to_vec();
