@@ -11,7 +11,7 @@ const THREADS_IN_POOL: usize = 4;
 const IP: &str = "0.0.0.0:7878";
 const WEB_ROOT: &str = "../web/";
 
-type ResponseHandler = fn(&str) -> String;
+type ResponseHandler = fn(&str) -> Vec<u8>;
 
 pub fn start() {
     thread::spawn(|| server_thread());
@@ -59,7 +59,7 @@ fn handle_connection(mut stream: TcpStream) {
 
     let response = handler(&path);
 
-    stream.write(response.as_bytes()).unwrap();
+    stream.write(&&response).unwrap();
     stream.flush().unwrap();
 }
 
@@ -116,20 +116,24 @@ fn file_in_path(path_to_check: &str) -> bool {
     }
 }
 
-fn file_server(file_path: &str) -> String {
+fn file_server(file_path: &str) -> Vec<u8> {
     // Serve the specified file content with an OK response
-    let status = "HTTP/1.1 200 OK\r\n\r\n";
     let root_path = std::path::Path::new(WEB_ROOT);
-    let contents = fs::read_to_string(root_path.join(file_path)).unwrap();
+    let mut response: Vec<u8> = "HTTP/1.1 200 OK\r\n\r\n".as_bytes().to_vec();
+    let mut file = fs::File::open(root_path.join(file_path)).unwrap();
 
-    format!("{}{}", status, contents)
+    file.read_to_end(&mut response).unwrap();
+
+    response
 }
 
-fn error_404(_file_path: &str) -> String {
+fn error_404(_file_path: &str) -> Vec<u8> {
     // Serve the 404.html to show an error to the user
-    let status = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
     let root_path = std::path::Path::new(WEB_ROOT);
-    let contents = fs::read_to_string(root_path.join("404.html")).unwrap();
+    let mut response: Vec<u8> = "HTTP/1.1 404 NOT FOUND\r\n\r\n".as_bytes().to_vec();
+    let mut file = fs::File::open(root_path.join("404.html")).unwrap();
 
-    format!("{}{}", status, contents)
+    file.read_to_end(&mut response).unwrap();
+
+    response
 }
