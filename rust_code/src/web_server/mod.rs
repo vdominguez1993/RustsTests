@@ -7,11 +7,13 @@ use std::str;
 use std::thread;
 use threadpool::ThreadPool;
 
+type ResponseHandler = fn(&str) -> Vec<u8>;
+
 const THREADS_IN_POOL: usize = 4;
 const IP: &str = "0.0.0.0:7878";
 const WEB_ROOT: &str = "../web/";
-
-type ResponseHandler = fn(&str) -> Vec<u8>;
+const GET_SERVICES: &'static [(&'static str, ResponseHandler)] =
+    &[("get_temperature", get_temperature_handler)];
 
 pub fn start() {
     thread::spawn(|| server_thread());
@@ -55,6 +57,9 @@ fn handle_connection(mut stream: TcpStream) {
             } else if file_in_path(&path) {
                 // Use the file server handler
                 handler = file_server;
+            } else {
+                // NOTE this will asign to 404 if service is not found
+                handler = get_service(&path);
             }
         }
         _ => println!("Unrecognized method {}", method),
@@ -117,6 +122,25 @@ fn file_in_path(path_to_check: &str) -> bool {
         // False if file does not exist or can't be opened
         Err(_) => false,
     }
+}
+
+fn get_service(path_to_check: &str) -> ResponseHandler {
+    let mut retval: ResponseHandler = error_404;
+    for &(name, handler) in GET_SERVICES {
+        println!("{}", name);
+        if &path_to_check == &name {
+            retval = handler;
+            break;
+        }
+    }
+
+    retval
+}
+
+fn get_temperature_handler(_file_path: &str) -> Vec<u8> {
+    let response: Vec<u8> = "HTTP/1.1 200 OK\r\n\r\n".as_bytes().to_vec();
+
+    response
 }
 
 fn is_trying_to_traverse(path_to_check: &str) -> bool {
