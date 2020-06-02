@@ -1,5 +1,5 @@
 use rusqlite::NO_PARAMS;
-use rusqlite::{Connection, Result};
+use rusqlite::{params, Connection, Result};
 use std::fs;
 use std::time::SystemTime;
 
@@ -13,6 +13,52 @@ const THERMAL_ZONE_FILE: &str = "/sys/class/thermal/thermal_zone0/temp";
 pub fn update_data() {
     check_db_existence().expect("Some error happened with the DB");
     add_data().expect("Error adding data");
+}
+
+struct DataTemp {
+    time: i32,
+    temp: f64,
+}
+
+pub fn get_last_entries(num_entries: i32) -> Result<String> {
+    let conn = Connection::open(DB_PATH)?;
+    let query: String = match num_entries {
+        x if x > 0 => format!(
+            "SELECT {time}, {} FROM {} ORDER BY {time} DESC LIMIT {}",
+            VALUE_COLUMN,
+            CPU_TEMP_TABLE,
+            num_entries,
+            time = TIME_COLUMN
+        ),
+        _ => format!(
+            "SELECT {time}, {} FROM {} ORDER BY {time} DESC",
+            VALUE_COLUMN,
+            CPU_TEMP_TABLE,
+            time = TIME_COLUMN
+        ),
+    };
+
+    let mut stmt = conn.prepare(&query)?;
+    let data_iter = stmt.query_map(params![], |row| {
+        Ok(DataTemp {
+            time: row.get(0)?,
+            temp: row.get(1)?,
+        })
+    })?;
+
+    let mut entries = String::from("{\"Data\": [");
+
+    for data in data_iter {
+        let data = data?;
+        entries.push_str(&format!(
+            "\r\n{{\"Time\":{}, \"Temp\": {}}},",
+            data.time, data.temp
+        ));
+    }
+    entries.pop();
+    entries.push_str("\r\n]}");
+
+    Ok(entries)
 }
 
 fn check_db_existence() -> Result<()> {

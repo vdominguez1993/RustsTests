@@ -1,3 +1,4 @@
+use crate::database;
 use crate::log::*;
 use std::fs;
 use std::io::prelude::*;
@@ -127,7 +128,6 @@ fn file_in_path(path_to_check: &str) -> bool {
 fn get_service(path_to_check: &str) -> ResponseHandler {
     let mut retval: ResponseHandler = error_404;
     for &(name, handler) in GET_SERVICES {
-        println!("{}", name);
         if &path_to_check == &name {
             retval = handler;
             break;
@@ -138,8 +138,10 @@ fn get_service(path_to_check: &str) -> ResponseHandler {
 }
 
 fn get_temperature_handler(_file_path: &str) -> Vec<u8> {
-    let response: Vec<u8> = "HTTP/1.1 200 OK\r\n\r\n".as_bytes().to_vec();
+    let mut response: Vec<u8> = "HTTP/1.1 200 OK\r\n\r\n".as_bytes().to_vec();
+    let temperature_record = database::get_last_entries(50).expect("Error getting data");
 
+    response.append(&mut temperature_record.as_bytes().to_vec());
     response
 }
 
