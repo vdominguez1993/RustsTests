@@ -138,7 +138,10 @@ fn get_service(path_to_check: &str) -> ResponseHandler {
 }
 
 fn get_temperature_handler(_file_path: &str) -> Vec<u8> {
-    let mut response: Vec<u8> = "HTTP/1.1 200 OK\r\n\r\n".as_bytes().to_vec();
+    let mut response: Vec<u8> =
+        "HTTP/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
+            .as_bytes()
+            .to_vec();
     let temperature_record = database::get_last_entries(50).expect("Error getting data");
 
     response.append(&mut temperature_record.as_bytes().to_vec());
@@ -152,7 +155,21 @@ fn is_trying_to_traverse(path_to_check: &str) -> bool {
 fn file_server(file_path: &str) -> Vec<u8> {
     // Serve the specified file content with an OK response
     let root_path = std::path::Path::new(WEB_ROOT);
-    let mut response: Vec<u8> = "HTTP/1.1 200 OK\r\n\r\n".as_bytes().to_vec();
+    let mut response: Vec<u8> = "HTTP/1.1 200 OK\r\n".as_bytes().to_vec();
+    if file_path.ends_with(".html") {
+        response.append(
+            &mut "Content-Type: text/html; charset=utf-8\r\n"
+                .as_bytes()
+                .to_vec(),
+        );
+    } else if file_path.ends_with(".js") {
+        response.append(
+            &mut "Content-Type: text/javascript; charset=utf-8\r\n"
+                .as_bytes()
+                .to_vec(),
+        );
+    }
+    response.append(&mut "\r\n".as_bytes().to_vec());
     let mut file = fs::File::open(root_path.join(file_path)).unwrap();
 
     file.read_to_end(&mut response).unwrap();
