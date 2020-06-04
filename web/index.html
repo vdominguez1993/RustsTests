@@ -22,12 +22,15 @@
         <h1 class="title">Temperature information</h1>
     </head>
     <body>
+        <div id="chart_div"></div>
         <table id="temp_table" class="mytable">
             <tr>
               <th style="min-width: 20ch;">Time</th>
               <th style="min-width: 7ch;">Temperature</th>
             </tr>
           </table> 
-        <script src="/temp_table.js"></script> 
+
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript" src="/temp_table.js"></script>
     </body>
 </html>

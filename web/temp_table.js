@@ -1,3 +1,6 @@
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(update_table_info);
+
 function update_table_info()
 {
     var xmlhttp = new XMLHttpRequest();
@@ -9,10 +12,29 @@ function update_table_info()
             for (let value of temp_data["Data"]) {
                 insert_row(value["Time"], value["Temp"]);
             }
+            draw_graph(temp_data);
         }
     };
     xmlhttp.open("GET", url, true);
     xmlhttp.send();
+}
+
+function draw_graph(data)
+{
+    let data_rows = [["Time", "Temperature"]];
+    for (let value of data["Data"]) {
+        data_rows.push([new Date(value["Time"] * 1000), value["Temp"]]);
+    }
+
+    var data = google.visualization.arrayToDataTable(data_rows);
+    var options = {
+        title: 'Temperature',
+        vAxis: {minValue: 0},
+        legend: {position: 'top'},
+    };
+
+    var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
 }
 
 function insert_row(time, value)
@@ -48,5 +70,3 @@ function get_formatted_date(unix_timestamp)
 function int_fill_zero_2(integer) {
     return (integer >= 10 ? "" : "0") + integer;
 }
-
-update_table_info();
