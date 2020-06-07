@@ -56,8 +56,9 @@ function insert_row(time, value)
 function get_formatted_date(unix_timestamp)
 {
     var date = new Date(unix_timestamp * 1000);
-    var month = int_fill_zero_2(date.getMonth());
-    var day = int_fill_zero_2(date.getDay());
+    // +1 because getmonth method returns the month from 0 to 11
+    var month = int_fill_zero_2(date.getMonth() + 1);
+    var day = int_fill_zero_2(date.getDate());
     var format_date = date.getFullYear() + "-" + month + "-" + day;
     var hours = int_fill_zero_2(date.getHours());
     var minutes = int_fill_zero_2(date.getMinutes());
