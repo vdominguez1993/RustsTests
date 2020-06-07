@@ -110,5 +110,5 @@ fn get_temperature() -> f32 {
     let value_in_file = fs::read_to_string(THERMAL_ZONE_FILE).expect("Error reading temperature");
     let integer_value: u32 = value_in_file.trim().parse().expect("Error parsing temp");
 
-    (integer_value / 1000) as f32
+    (integer_value as f32) / 1000.0
 }
